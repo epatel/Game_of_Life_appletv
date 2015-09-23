@@ -186,6 +186,8 @@
     }
 }
 
+#define IS_NEIGHBOR(_x, _y) (_cells[SAFEINDEX(_x, _y)] ? 1 : 0)
+
 - (void)runTick:(NSTimer*)timer
 {
     NSInteger *neighbors = (NSInteger*)malloc(sizeof(NSInteger)*_width*_height);
@@ -193,14 +195,14 @@
     for (NSInteger y=0; y<_height; y++) {
         for (NSInteger x=0; x<_width; x++) {
             neighbors[INDEX(x, y)] =
-            _cells[SAFEINDEX(x+1, y+1)] +
-            _cells[SAFEINDEX(x+1, y)] +
-            _cells[SAFEINDEX(x+1, y-1)] +
-            _cells[SAFEINDEX(x, y+1)] +
-            _cells[SAFEINDEX(x, y-1)] +
-            _cells[SAFEINDEX(x-1, y+1)] +
-            _cells[SAFEINDEX(x-1, y)] +
-            _cells[SAFEINDEX(x-1, y-1)];
+            IS_NEIGHBOR(x+1, y+1) +
+            IS_NEIGHBOR(x+1, y) +
+            IS_NEIGHBOR(x+1, y-1) +
+            IS_NEIGHBOR(x, y+1) +
+            IS_NEIGHBOR(x, y-1) +
+            IS_NEIGHBOR(x-1, y+1) +
+            IS_NEIGHBOR(x-1, y) +
+            IS_NEIGHBOR(x-1, y-1);
         }
     }
     for (NSInteger y=0; y<_height; y++) {
@@ -210,6 +212,8 @@
                 if (neighbors[index] < 2 ||
                     neighbors[index] > 3) {
                     _cells[index] = 0;
+                } else {
+                    _cells[index]++;
                 }
             } else {
                 if (neighbors[index] == 3) {
@@ -295,19 +299,20 @@
     [[UIColor blackColor] setStroke];
     [paths stroke];
 
-    UIBezierPath *cellPaths = [UIBezierPath bezierPath];
     for (NSInteger y=0; y<_height; y++) {
         for (NSInteger x=0; x<_width; x++) {
-            if (_cells[INDEX(x, y)]) {
+            NSInteger generations = _cells[INDEX(x, y)];
+            if (generations) {
+                [[UIColor colorWithHue:0.25 + MIN(generations,30)/40.0
+                            saturation:1.0
+                            brightness:1.0
+                                 alpha:1] setFill];
                 UIBezierPath *path = [self pathForCellatX:x Y:y];
-                [cellPaths appendPath:path];
+                [path fill];
             }
         }
     }
 
-    [[UIColor greenColor] setFill];
-    [cellPaths fill];
-    
     if (!_timer) {
         [[UIColor colorWithRed:1 green:1 blue:0 alpha:0.5] set];
         [[self pathForCellatX:_cursorX Y:_cursorY] fill];
